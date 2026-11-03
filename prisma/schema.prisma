@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Goal {
+  id          String   @id @default(cuid())
+  title       String
+  targetSkill String
+  done        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+}

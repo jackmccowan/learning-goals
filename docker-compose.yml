@@ -1,0 +1,48 @@
+# Runs everything with one command: docker compose up
+# The default credentials are for local development only. Override them with
+# a .env file (see .env.example).
+name: learning-goals
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-learning_goals}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_locally}
+      POSTGRES_DB: ${POSTGRES_DB:-learning_goals}
+    ports:
+      # Only reachable from this machine, for `npm run dev` and database tools.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  # Applies migrations and seeds an empty database, then exits.
+  migrate:
+    build:
+      context: .
+      target: migrator
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-learning_goals}:${POSTGRES_PASSWORD:-change_me_locally}@db:5432/${POSTGRES_DB:-learning_goals}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+      target: runner
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-learning_goals}:${POSTGRES_PASSWORD:-change_me_locally}@db:5432/${POSTGRES_DB:-learning_goals}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  db-data:

@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# generated prisma client (rebuilt by `prisma generate`)
+src/generated/
+
+# secrets and local environment: only .env.example is committed
+.env
+.env.*
+!.env.example
+
+# written by `next dev`, not part of this project
+AGENTS.md
+
+# test and tool output
+coverage/
+.lighthouse/
+
+# logs and OS files
+*.log
+.DS_Store
