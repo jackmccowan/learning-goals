@@ -18,8 +18,31 @@ describe("validateAddGoalInput", () => {
     expect(validateAddGoalInput({ title: "  Learn hooks ", targetSkill: "\tReact\n" })).toEqual({
       title: "Learn hooks",
       targetSkill: "React",
+      targetDate: null,
     });
   });
+
+  it.each([
+    ["left out", undefined],
+    ["null", null],
+    ["blank", "  "],
+  ])("accepts a missing target date (%s)", (_name, targetDate) => {
+    expect(validateAddGoalInput({ title: "Learn", targetSkill: "React", targetDate }).targetDate).toBeNull();
+  });
+
+  it("turns a valid target date into midnight UTC", () => {
+    const { targetDate } = validateAddGoalInput({ title: "Learn", targetSkill: "React", targetDate: "2026-12-31" });
+    expect(targetDate?.toISOString()).toBe("2026-12-31T00:00:00.000Z");
+  });
+
+  it.each(["not a date", "2026-02-30", "2026-13-01", "31/12/2026", "2026-12-31T10:00:00Z"])(
+    "rejects an invalid target date %j",
+    (targetDate) => {
+      const error = captureError(() => validateAddGoalInput({ title: "Learn", targetSkill: "React", targetDate }));
+      expect(error.message).toBe("Target date must be a valid date in YYYY-MM-DD format.");
+      expect(error.extensions).toMatchObject({ code: "BAD_USER_INPUT", field: "targetDate" });
+    },
+  );
 
   it.each([
     ["empty", ""],
@@ -41,7 +64,7 @@ describe("validateAddGoalInput", () => {
       title: "t".repeat(TITLE_MAX_LENGTH),
       targetSkill: "s".repeat(TARGET_SKILL_MAX_LENGTH),
     };
-    expect(validateAddGoalInput(input)).toEqual(input);
+    expect(validateAddGoalInput(input)).toEqual({ ...input, targetDate: null });
   });
 
   it("rejects values one character over the limits", () => {

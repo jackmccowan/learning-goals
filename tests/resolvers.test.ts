@@ -41,6 +41,7 @@ const older: GoalRecord = {
   title: "Older goal",
   targetSkill: "SQL",
   done: true,
+  targetDate: new Date("2026-06-30T00:00:00.000Z"),
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
 };
 const newer: GoalRecord = {
@@ -48,6 +49,7 @@ const newer: GoalRecord = {
   title: "Newer goal",
   targetSkill: "React",
   done: false,
+  targetDate: null,
   createdAt: new Date("2026-02-01T00:00:00.000Z"),
 };
 
@@ -80,11 +82,11 @@ describe("GraphQL API", () => {
 
   describe("goals query", () => {
     it("lists goals newest first with ISO date strings", async () => {
-      const result = await run("{ goals { id title targetSkill done createdAt } }");
+      const result = await run("{ goals { id title targetSkill done targetDate createdAt } }");
       expect(result.errors).toBeUndefined();
       expect(result.data?.goals).toEqual([
         { ...newer, createdAt: "2026-02-01T00:00:00.000Z" },
-        { ...older, createdAt: "2026-01-01T00:00:00.000Z" },
+        { ...older, targetDate: "2026-06-30T00:00:00.000Z", createdAt: "2026-01-01T00:00:00.000Z" },
       ]);
       expect(store.goal.findMany).toHaveBeenCalledWith({ orderBy: { createdAt: "desc" } });
     });
@@ -92,7 +94,7 @@ describe("GraphQL API", () => {
 
   describe("addGoal mutation", () => {
     const mutation = `mutation Add($input: AddGoalInput!) {
-      addGoal(input: $input) { id title targetSkill done }
+      addGoal(input: $input) { id title targetSkill done targetDate }
     }`;
 
     it("stores trimmed values and starts as not done", async () => {
@@ -103,10 +105,30 @@ describe("GraphQL API", () => {
         title: "Learn Yoga",
         targetSkill: "GraphQL",
         done: false,
+        targetDate: null,
       });
       expect(store.goal.create).toHaveBeenCalledWith({
-        data: { title: "Learn Yoga", targetSkill: "GraphQL" },
+        data: { title: "Learn Yoga", targetSkill: "GraphQL", targetDate: null },
       });
+    });
+
+    it("stores a target date as midnight UTC and returns it as ISO 8601", async () => {
+      const result = await run(mutation, {
+        input: { title: "Learn Yoga", targetSkill: "GraphQL", targetDate: "2026-12-31" },
+      });
+      expect(result.errors).toBeUndefined();
+      expect(result.data?.addGoal).toMatchObject({ targetDate: "2026-12-31T00:00:00.000Z" });
+      expect(store.goal.create).toHaveBeenCalledWith({
+        data: { title: "Learn Yoga", targetSkill: "GraphQL", targetDate: new Date("2026-12-31T00:00:00.000Z") },
+      });
+    });
+
+    it("rejects an invalid target date and writes nothing", async () => {
+      const result = await run(mutation, {
+        input: { title: "Learn Yoga", targetSkill: "GraphQL", targetDate: "2026-02-30" },
+      });
+      expect(result.errors?.[0]?.extensions).toMatchObject({ code: "BAD_USER_INPUT", field: "targetDate" });
+      expect(store.goal.create).not.toHaveBeenCalled();
     });
 
     it("returns a validation error and writes nothing for a blank title", async () => {

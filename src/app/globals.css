@@ -71,7 +71,8 @@ h2 {
 
 .goal-form {
   display: grid;
-  grid-template-columns: 2fr 1fr auto;
+  /* The date picker has a minimum width of its own, so give it a fixed column. */
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) 10.5rem auto;
   align-items: end;
   gap: 0.75rem;
   padding: 1rem;
@@ -89,6 +90,11 @@ h2 {
 .field label {
   font-size: 0.875rem;
   font-weight: 600;
+}
+
+.optional {
+  color: var(--muted);
+  font-weight: 400;
 }
 
 input:not([type="checkbox"]) {

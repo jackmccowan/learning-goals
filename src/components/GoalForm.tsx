@@ -2,25 +2,29 @@
 
 import { useState, type FormEvent } from "react";
 import { TARGET_SKILL_MAX_LENGTH, TITLE_MAX_LENGTH } from "@/lib/goal-limits";
+import type { NewGoal } from "@/lib/goals-api";
 
 interface GoalFormProps {
   /** Resolves to true when the goal was saved, so the form knows to clear. */
-  onAdd: (input: { title: string; targetSkill: string }) => Promise<boolean>;
+  onAdd: (input: NewGoal) => Promise<boolean>;
 }
 
 export function GoalForm({ onAdd }: GoalFormProps) {
   const [title, setTitle] = useState("");
   const [targetSkill, setTargetSkill] = useState("");
+  // "YYYY-MM-DD" from the date picker, or "" when left empty.
+  const [targetDate, setTargetDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); // Stop the browser's default full-page form post.
     setSubmitting(true);
-    const saved = await onAdd({ title, targetSkill });
+    const saved = await onAdd({ title, targetSkill, targetDate: targetDate || null });
     setSubmitting(false);
     if (saved) {
       setTitle("");
       setTargetSkill("");
+      setTargetDate("");
     }
   }
 
@@ -48,6 +52,17 @@ export function GoalForm({ onAdd }: GoalFormProps) {
           maxLength={TARGET_SKILL_MAX_LENGTH}
           autoComplete="off"
           required
+        />
+      </div>
+      <div className="field">
+        <label htmlFor="goal-date">
+          Target date <span className="optional">(optional)</span>
+        </label>
+        <input
+          id="goal-date"
+          type="date"
+          value={targetDate}
+          onChange={(event) => setTargetDate(event.target.value)}
         />
       </div>
       <button type="submit" className="button-primary" disabled={submitting}>

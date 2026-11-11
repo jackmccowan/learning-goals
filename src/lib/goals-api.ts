@@ -5,6 +5,8 @@ export interface Goal {
   title: string;
   targetSkill: string;
   done: boolean;
+  /** ISO 8601 string at midnight UTC, or null when no date was set. */
+  targetDate: string | null;
   createdAt: string;
 }
 
@@ -13,7 +15,7 @@ interface GraphQLResponse<T> {
   errors?: { message: string }[];
 }
 
-const GOAL_FIELDS = "id title targetSkill done createdAt";
+const GOAL_FIELDS = "id title targetSkill done targetDate createdAt";
 
 async function request<T>(
   query: string,
@@ -45,7 +47,14 @@ export async function fetchGoals(signal?: AbortSignal): Promise<Goal[]> {
   return data.goals;
 }
 
-export async function addGoal(input: { title: string; targetSkill: string }): Promise<Goal> {
+export interface NewGoal {
+  title: string;
+  targetSkill: string;
+  /** YYYY-MM-DD, or null for no date. */
+  targetDate: string | null;
+}
+
+export async function addGoal(input: NewGoal): Promise<Goal> {
   const data = await request<{ addGoal: Goal }>(
     `mutation AddGoal($input: AddGoalInput!) { addGoal(input: $input) { ${GOAL_FIELDS} } }`,
     { input },

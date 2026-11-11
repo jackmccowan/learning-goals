@@ -1,11 +1,17 @@
 import { GraphQLError } from "graphql";
-import { validateAddGoalInput, validateGoalId, type AddGoalInput } from "./validation";
+import {
+  validateAddGoalInput,
+  validateGoalId,
+  type AddGoalInput,
+  type ValidAddGoalInput,
+} from "./validation";
 
 export interface GoalRecord {
   id: string;
   title: string;
   targetSkill: string;
   done: boolean;
+  targetDate: Date | null;
   createdAt: Date;
 }
 
@@ -17,7 +23,7 @@ export interface GoalStore {
   goal: {
     findMany(args: { orderBy: { createdAt: "desc" } }): Promise<GoalRecord[]>;
     findUnique(args: { where: { id: string } }): Promise<GoalRecord | null>;
-    create(args: { data: AddGoalInput }): Promise<GoalRecord>;
+    create(args: { data: ValidAddGoalInput }): Promise<GoalRecord>;
     updateMany(args: {
       where: { id: string; done: boolean };
       data: { done: boolean };
@@ -42,6 +48,7 @@ export const resolvers = {
   Goal: {
     // GraphQL has no built-in date type, so dates travel as ISO 8601 strings.
     createdAt: (goal: GoalRecord) => goal.createdAt.toISOString(),
+    targetDate: (goal: GoalRecord) => goal.targetDate?.toISOString() ?? null,
   },
   Query: {
     goals: (_parent: unknown, _args: unknown, { db }: GraphQLContext) =>

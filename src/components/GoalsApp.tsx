@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { addGoal, deleteGoal, fetchGoals, toggleGoal, type Goal } from "@/lib/goals-api";
+import { addGoal, deleteGoal, fetchGoals, toggleGoal, type Goal, type NewGoal } from "@/lib/goals-api";
 import { GoalForm } from "./GoalForm";
 import { GoalItem } from "./GoalItem";
 
@@ -46,7 +46,7 @@ export function GoalsApp() {
     });
   }
 
-  async function handleAdd(input: { title: string; targetSkill: string }): Promise<boolean> {
+  async function handleAdd(input: NewGoal): Promise<boolean> {
     setError(null);
     try {
       const created = await addGoal(input);

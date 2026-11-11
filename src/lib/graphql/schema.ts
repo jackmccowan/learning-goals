@@ -7,12 +7,16 @@ export const typeDefs = /* GraphQL */ `
     title: String!
     targetSkill: String!
     done: Boolean!
+    "Optional date (YYYY-MM-DD) to finish by, as an ISO 8601 string."
+    targetDate: String
     createdAt: String!
   }
 
   input AddGoalInput {
     title: String!
     targetSkill: String!
+    "Optional, in YYYY-MM-DD format."
+    targetDate: String
   }
 
   type Query {

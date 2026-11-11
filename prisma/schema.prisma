@@ -12,6 +12,7 @@ model Goal {
   title       String
   targetSkill String
   done        Boolean  @default(false)
+  targetDate  DateTime?
   createdAt   DateTime @default(now())
 
   @@index([createdAt])
